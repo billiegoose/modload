@@ -4,13 +4,13 @@
   "description": "A highly experimental alternative module loader",
   "preferGlobal": true,
   "bin": {
-    "modload": "modload.js",
-    "ml": "modload.js"
+    "modload": "bin/modload.js",
+    "ml": "bin/modload.js"
   },
   "scripts": {
     "docs": "projectz && mos",
     "lint": "standard",
-    "test": "node modload.js ./test/fixture/server.js"
+    "test": "node bin/modload.js ./test/fixture/server.js"
   },
   "engines": {
     "node": ">=7.0.0"
@@ -27,6 +27,8 @@
     "cli-columns": "^1.0.6",
     "cmd-shim": "^2.0.2",
     "decompress": "^4.0.0",
+    "linkfs": "0.0.2",
+    "memfs": "0.0.15",
     "nice-package": "^1.2.5",
     "node-fetch": "1.6.0",
     "observatory": "^1.0.0",
@@ -37,6 +39,7 @@
     "sha": "2.0.1",
     "shelljs": "0.7.3",
     "table": "^4.0.1",
+    "unionfs": "0.0.9",
     "watt": "3.3.0"
   },
   "devDependencies": {
