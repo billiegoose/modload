@@ -40,8 +40,14 @@ requireHacker.global_hook('logger', (path, module) => {
   if (triplet[2].startsWith(rootDir)) {
     triplet[2] = triplet[2].replace(rootDir, '')
   }
-  triplets.add(triplet)
-  stream.write(triplet)
+  // deduplicate
+  let striplet = triplet.join('\n')
+  if (triplets.has(striplet)) {
+    stream.write([triplet[0], triplet[1], "[we've seen this before]"])
+  } else {
+    triplets.add(striplet)
+    stream.write(triplet)
+  }
   // Don't actually modify anything.
   return
 })
