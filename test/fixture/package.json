@@ -1,0 +1,14 @@
+{
+  "name": "fixture",
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {
+    "test": "node ../../modload.js ./server.js"
+  },
+  "keywords": [],
+  "author": "William Hilton <wmhilton@gmail.com>",
+  "license": "Unlicense",
+  "dependencies": {
+    "express": "^4.14.1"
+  }
+}

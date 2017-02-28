@@ -1,19 +1,16 @@
 {
-  "name": "modinst",
-  "version": "0.0.2",
-  "description": "A highly experimental alternative module installer",
+  "name": "modload",
+  "version": "0.0.0",
+  "description": "A highly experimental alternative module loader",
   "preferGlobal": true,
   "bin": {
-    "modinst": "lib/cli.js",
-    "mi": "lib/cli.js",
-    "modrun": "bin/modrun.js",
-    "mr": "bin/modrun.js"
+    "modload": "modload.js",
+    "ml": "modload.js"
   },
-  "main": "index.js",
   "scripts": {
     "docs": "projectz && mos",
     "lint": "standard",
-    "test": "standard && node lib/cli.js @wmhilton/log/1.x"
+    "test": "node modload.js ./test/fixture/server.js"
   },
   "engines": {
     "node": ">=7.0.0"
@@ -39,6 +36,7 @@
     "semver": "^5.3.0",
     "sha": "2.0.1",
     "shelljs": "0.7.3",
+    "table": "^4.0.1",
     "watt": "3.3.0"
   },
   "devDependencies": {
