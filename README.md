@@ -16,10 +16,10 @@
 
 ## 5 year plan
 
-Phase 1 [50% complete] is to hook into the `require` function and
+Phase 1 [complete] is to hook into the `require` function and
 add some logging to trace what modules are being loaded and from where.
 
-Phase 2 will be to serialize this data and cache it, so that the next time you
+Phase 2 [complete] will be to serialize this data and cache it, so that the next time you
 run the program it will skip Node's slow `require` algorithm full of file existance checks
 and simply load them from where it learned they were last time.
 

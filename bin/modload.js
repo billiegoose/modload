@@ -1,58 +1,54 @@
-'use strict'
+#!/usr/bin/env node
 let Module = require('module')
-const table = require('table')
-const path = require('path')
+const upath = require('upath')
+const sortKeys = require('sort-keys')
+const fs = require('fs')
 // Remove the modrun.js argument, so the actual main module isn't confused when it parses argv.
 process.argv.splice(1, 1)
 
-// Set up pretty output table
-let columnWidth = process.stdout.isTTY ? Math.floor((process.stdout.columns - 50) / 2) - 6 : 50
-let triplets = new Set()
-let stream = table.createStream({
-  columnCount: 3,
-  columnDefault: {
-    width: 50
-  },
-  columns: {
-    0: {
-      width: columnWidth
-    },
-    1: {
-      width: 50
-    },
-    2: {
-      width: columnWidth
-    }
-  }
-})
+// See if we have an existing cache.
+let tree = {}
+if (fs.existsSync('node_modules.cache.json')) {
+  tree = JSON.parse(fs.readFileSync('node_modules.cache.json', 'utf8'))
+  console.log('>>> Loaded node_modules.cache.json <<<')
+}
 
 // For easier reading of output, lets shave some path info.
-let rootDir = path.dirname(path.resolve(process.argv[1]))
+let rootDir = upath.dirname(upath.resolve(process.argv[1]))
 
 // Now we need to modify the semantics of 'require'
 let requireHacker = require('require-hacker')
 requireHacker.global_hook('logger', (path, module) => {
-  // add triplet
-  let triplet = [module && module.id || '', path, requireHacker.resolve(path, module)]
-  if (triplet[0].startsWith(rootDir)) {
-    triplet[0] = triplet[0].replace(rootDir, '')
+  const start = upath.normalizeTrim(upath.joinSafe('./', upath.relative(rootDir, module && module.id && module.id.replace(/\.logger$/, '') || '')))
+  const result = (tree[start] && tree[start][path]) || upath.normalizeTrim(upath.joinSafe('./', upath.relative(rootDir, requireHacker.resolve(path, module))))
+  // add to graph
+  tree[start] = tree[start] || {}
+  // if (tree[start][path]) {
+  //   if (tree[start][path] !== result) {
+  //     console.log('ASSERTION FAILURE:')
+  //     console.log('expected:')
+  //     console.log([start, path, tree[start][path]])
+  //     console.log('saw:')
+  //     console.log(triplet)
+  //     process.exit(1)
+  //   }
+  // }
+  tree[start][path] = result
+  // Emulate the original behavior.
+  let source = fs.readFileSync(upath.join(rootDir, result), 'utf8')
+  // Handle stupid JSON case.
+  if (upath.extname(result) === '.json') source = 'module.exports = ' + source
+  let foo = {
+    source,
+    path: upath.join(rootDir, result)
   }
-  if (triplet[2].startsWith(rootDir)) {
-    triplet[2] = triplet[2].replace(rootDir, '')
-  }
-  // deduplicate
-  let striplet = triplet.join('\n')
-  if (triplets.has(striplet)) {
-    stream.write([triplet[0], triplet[1], "[we've seen this before]"])
-  } else {
-    triplets.add(striplet)
-    stream.write(triplet)
-  }
-  // Don't actually modify anything.
-  return
+  return foo
 })
-stream.write(['Module', 'Required Path', 'Resolved Path'])
 
+process.on('exit', function () {
+  let cache = JSON.stringify(sortKeys(tree, {deep: true}), null, 2)
+  fs.writeFileSync('node_modules.cache.json', cache, 'utf8')
+})
 // Finally, we need to convince this module he's the main module.
 // Unfortunately, this is not part of the documented API.
 // https://github.com/nodejs/node/blob/master/lib/module.js#L602
