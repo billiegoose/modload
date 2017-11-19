@@ -50,9 +50,20 @@ if (fs.existsSync(filesCacheFilepath)) {
 
 // Now we need to modify the semantics of 'require'
 let requireHacker = require('require-hacker')
-requireHacker.global_hook('logger', (path, module) => {
-  const start = upath.normalizeTrim(upath.joinSafe('./', upath.relative(rootDir, module && module.id && module.id.replace(/\.logger$/, '') || '')))
-  // Look up in our own cache.
+let alreadyLoaded = new Set()
+requireHacker.global_hook('modload', (path, module) => {
+  const start = (module === null || module.id === '.') ? '.' : upath.normalizeTrim(upath.joinSafe('./', upath.relative(rootDir, module && module.filename && module.filename.replace(/\.modload/, '') || '')))
+  // This is a cheap hack to re-achieve node's module-caching behavior.
+  // Took me a while to realize requireHacker wasn't caching modules, which
+  // resulted in mutually dependent modules doing an infinite loop.
+  if (alreadyLoaded.has(start)) {
+    return
+  } else {
+    alreadyLoaded.add(start)
+  }
+  // Look up in our cache.
+  // TODO: Come back and fix this. This only works because cache.path is out of sync with tree.
+  // IN THE END, I WANT A SINGLE INDEX.JSON FILE TO HOLD EVERYTHING.
   if (cache && cache.path && cache.path[start] && cache.path[start][path]) {
     let result = cache.path[start][path]
     let sha = cache.sha[result]
@@ -69,7 +80,7 @@ requireHacker.global_hook('logger', (path, module) => {
       source
     }
   }
-  const result = (tree[start] && tree[start][path]) || upath.normalizeTrim(upath.joinSafe('./', upath.relative(rootDir, requireHacker.resolve(path, module))))
+  const result = upath.normalizeTrim(upath.joinSafe('./', upath.relative(rootDir, requireHacker.resolve(path, module))))
   // add to graph
   tree[start] = tree[start] || {}
   tree[start][path] = result
@@ -135,7 +146,7 @@ process.on('exit', function () {
 })
 
 // Begin processing fileQueue
-processQueue()
+// processQueue()
 
 // Finally, we need to convince this module he's the main module.
 // Unfortunately, this is not part of the documented API.
